@@ -83,6 +83,9 @@ struct SendungsListe: View {
         let g = mitPaketen ? kern.gruppen : Gruppen()
         let b = mitBriefen ? kern.briefGruppen : BriefGruppen()
         let leer = g.aktiv.isEmpty && g.zugestellt.isEmpty && b.offen.isEmpty && b.angekommen.isEmpty
+        // Unterwegs nach Liefertag gegliedert (früheste zuerst), ohne Termin am Ende
+        let nachTag = Dictionary(grouping: g.unterwegs.filter { !$0.erwartet.isEmpty }, by: \.erwartet)
+        let ohneTermin = g.unterwegs.filter { $0.erwartet.isEmpty }
         List(selection: $kern.auswahl) {
             if kern.einstellungen.eingerichtet {
                 Picker(T("Zeigen"), selection: $e.bereich) {
@@ -110,10 +113,15 @@ struct SendungsListe: View {
                     ForEach(g.heute) { zeile($0) }
                 }
             }
-            if !g.unterwegs.isEmpty || !b.unterwegs.isEmpty {
-                Section(T("Unterwegs")) {
+            ForEach(nachTag.keys.sorted(), id: \.self) { tag in
+                Section(Self.tagUeberschrift(tag)) {
+                    ForEach(nachTag[tag] ?? []) { zeile($0) }
+                }
+            }
+            if !ohneTermin.isEmpty || !b.unterwegs.isEmpty {
+                Section(nachTag.isEmpty ? T("Unterwegs") : T("Unterwegs ohne Termin")) {
                     ForEach(b.unterwegs) { briefZeile($0) }
-                    ForEach(g.unterwegs) { zeile($0) }
+                    ForEach(ohneTermin) { zeile($0) }
                 }
             }
             if !g.zugestellt.isEmpty || !b.angekommen.isEmpty {
@@ -181,6 +189,18 @@ struct SendungsListe: View {
         } message: {
             Text(T("Leer lassen, um wieder den Absender zu zeigen."))
         }
+    }
+
+    /// "2026-11-07" → „Morgen · Samstag, 7. November“ / „Samstag, 7. November“ / „Überfällig“
+    static func tagUeberschrift(_ iso: String) -> String {
+        let t = iso.split(separator: "-").compactMap { Int($0) }
+        let k = Calendar.current
+        guard t.count == 3, let d = k.date(from: DateComponents(year: t[0], month: t[1], day: t[2])) else { return iso }
+        let tage = k.dateComponents([.day], from: k.startOfDay(for: Date()), to: d).day ?? 0
+        let text = d.formatted(.dateTime.weekday(.wide).day().month(.wide))
+        if tage < 0 { return T("Überfällig") }
+        if tage == 1 { return T("Morgen · %1", text) }
+        return text
     }
 
     private func briefZeile(_ b: Brief) -> some View {

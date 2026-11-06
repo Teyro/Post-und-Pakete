@@ -239,7 +239,7 @@ public struct DHLOeffentlichAnbieter: Anbieter {
         throw letzter
     }
 
-    static func lesen(_ s: JSON) -> Spur {
+    public static func lesen(_ s: JSON) -> Spur {
         var spur = Spur()
         let d = s["sendungsdetails"], v = d?["sendungsverlauf"]
         spur.ereignisse = Netz.sortiert((v?["events"]?.liste ?? []).compactMap { e in
@@ -251,8 +251,15 @@ public struct DHLOeffentlichAnbieter: Anbieter {
         spur.stand = zugestellt ? "zugestellt" : Netz.standAusText(spur.ereignisse.first?.text ?? spur.text)
         if !zugestellt && spur.stand == "zugestellt" { spur.stand = Netz.standAusText(spur.text) }
         spur.ende = zugestellt
-        // Termin und Zeitfenster stehen (wenn bekannt) unter "zustellung" – Namen schwanken, darum suchen
-        if let z = d?["zustellung"]?.objekt {
+        // Voraussichtliche Zustellung: zustellung.zustellzeitfensterVon/Bis ("2026-11-07" oder mit Uhrzeit)
+        if !zugestellt, let von = d?["zustellung"]?["zustellzeitfensterVon"]?.text, von.count >= 10, von.prefix(10).filter({ $0 == "-" }).count == 2 {
+            spur.erwartet = String(von.prefix(10))
+            if let bis = d?["zustellung"]?["zustellzeitfensterBis"]?.text, von.contains("T"), bis.contains("T"), bis.prefix(10) == von.prefix(10), von.count >= 16, bis.count >= 16 {
+                spur.zeitfenster = "\(von.dropFirst(11).prefix(5))–\(bis.dropFirst(11).prefix(5))"
+            }
+        }
+        // sonst: andere Felder unter "zustellung" – Namen schwanken, darum suchen
+        if spur.erwartet.isEmpty, !zugestellt, let z = d?["zustellung"]?.objekt {
             for (k, w) in z {
                 let k2 = k.lowercased()
                 if spur.erwartet.isEmpty, k2.contains("datum") || k2.contains("tag"), let t = w.text { spur.erwartet = Netz.tag(t) }

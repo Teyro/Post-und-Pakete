@@ -29,6 +29,9 @@ final class Kern {
     private(set) var fehler = ""
     /// Fehler der Anbieter beim letzten direkten Abruf (Anbieter → Text)
     private(set) var anbieterFehler: [String: String] = [:]
+    /// Mehr von DHL mit der Postleitzahl (Sendungsnummer → Absender, Empfänger, Orte)
+    private(set) var mehr: [String: DHLMitPLZ.Mehr] = [:]
+    @ObservationIgnored private var mehrZeit: [String: Date] = [:]
     /// Kurze Meldung (z. B. „Hinzugefügt“ oder ein Fehler bei einer Aktion)
     var meldung = ""
     /// Gewählte Sendung (Liste → Detail; auch aus Widgets und Mitteilungen)
@@ -200,6 +203,17 @@ final class Kern {
         direkt = liste
         liste.speichern()
         widgetsSchreiben()
+    }
+
+    /// DHL mit Postleitzahl fragen (höchstens alle 10 Minuten je Sendung); Gemerktes gleich zeigen
+    func mehrLaden(_ s: Sendung) async {
+        guard s.dienst == "dhl", !s.nummer.isEmpty, !vorschau else { return }
+        if mehr[s.nummer] == nil, let g = DHLMitPLZ.gemerkt(s.nummer) { mehr[s.nummer] = g }
+        let plz = einstellungen.plz
+        guard plz.count == 5, Date().timeIntervalSince(mehrZeit[s.nummer] ?? .distantPast) > 600 else { return }
+        mehrZeit[s.nummer] = Date()
+        let dhl = DHLMitPLZ()
+        if let m = await dhl.abfragen(nummer: s.nummer, plz: plz) { mehr[s.nummer] = m }
     }
 
     static func fehlerText(_ f: AnbieterFehler) -> String {
@@ -401,6 +415,8 @@ final class Einstellungen {
     var rueckgabeErinnern: Bool { didSet { d.set(rueckgabeErinnern, forKey: "rueckgabeErinnern") } }
     /// Neue Versionen selbst suchen (Mac: auch installieren; iPhone: Bescheid geben)
     var autoUpdate: Bool { didSet { d.set(autoUpdate, forKey: "autoUpdate") } }
+    /// Eigene Postleitzahl: DHL zeigt damit mehr (Absender, Empfänger, Orte im Verlauf)
+    var plz: String { didSet { if !vorschau { d.set(plz, forKey: "plz") } } }
     var token: String {
         didSet {
             guard !vorschau else { return }
@@ -428,6 +444,7 @@ final class Einstellungen {
         bereich = d.string(forKey: "bereich") ?? "alle"
         rueckgabeErinnern = d.bool(forKey: "rueckgabeErinnern")
         autoUpdate = d.bool(forKey: "autoUpdate")
+        plz = vorschau ? "" : d.string(forKey: "plz") ?? ""
         // bis 1.0 lag der Token auf dem iPhone in den Einstellungen
         let alt = d.string(forKey: "token") ?? ""
         token = vorschau ? "" : Schluesselbund.lesen(konto: "token") ?? alt

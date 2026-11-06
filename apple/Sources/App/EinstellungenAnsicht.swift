@@ -30,6 +30,21 @@ struct EinstellungenAnsicht: View {
                 Text(T("Das Token legst du in Home Assistant an: unten links auf deinen Namen → Sicherheit → Langlebige Zugriffstoken."))
             }
 
+            Section {
+                TextField(T("Postleitzahl, z. B. 22087"), text: $e.plz)
+                    #if os(iOS)
+                    .keyboardType(.numberPad)
+                    #endif
+                    .onChange(of: e.plz) { _, neu in
+                        let n = String(neu.filter(\.isNumber).prefix(5))
+                        if n != neu { e.plz = n }
+                    }
+            } header: {
+                Text(T("DHL mit Postleitzahl"))
+            } footer: {
+                Text(T("Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL."))
+            }
+
             DirektEinstellungen(kern: kern)
 
             if let konten = kern.daten?.konten, konten.count > 1 {

@@ -39,6 +39,15 @@ final class AnbieterTests: XCTestCase {
         XCTAssertEqual(Verfolgung(schluessel: s).moeglich("dpd"), ["17TRACK", "Ship24"])
     }
 
+    func testDHLVoraussichtlicheZustellung() {
+        let j = JSON.lesen(#"{"sendungsdetails":{"istZugestellt":false,"zustellung":{"zustellzeitfensterVon":"2026-11-07","zustellzeitfensterBis":"2026-11-07","hasDeliveryDateMismatch":false},"sendungsverlauf":{"status":"Vorbereitung für Weitertransport","events":[{"datum":"2026-11-06T15:35:57+01:00","status":"Die Sendung wurde von DHL bearbeitet und wird für den Weitertransport in die Region des Empfängers vorbereitet."}]}}}"#)!
+        let s = DHLOeffentlichAnbieter.lesen(j)
+        XCTAssertEqual(s.erwartet, "2026-11-07")
+        XCTAssertEqual(s.zeitfenster, "")
+        let mitZeit = JSON.lesen(#"{"sendungsdetails":{"istZugestellt":false,"zustellung":{"zustellzeitfensterVon":"2026-11-07T10:00:00+01:00","zustellzeitfensterBis":"2026-11-07T12:30:00+01:00"},"sendungsverlauf":{"events":[]}}}"#)!
+        XCTAssertEqual(DHLOeffentlichAnbieter.lesen(mitZeit).zeitfenster, "10:00–12:30")
+    }
+
     func testDHLOhneSchluessel() {
         let j = JSON.lesen(#"{"id":"00340434161094015902","sendungsdetails":{"istZugestellt":true,"sendungsverlauf":{"status":"Abholung aus Packstation","events":[{"datum":"2026-10-16T17:37:10+02:00","status":"Die Sendung wurde elektronisch angekündigt."},{"datum":"2026-10-19T07:58:09+02:00","status":"Die Sendung wurde in das Zustellfahrzeug geladen. Die Zustellung  erfolgt voraussichtlich heute."},{"datum":"2026-10-19T12:53:25+02:00","status":"Die Sendung konnte nicht zugestellt werden und wird in eine Packstation gebracht."},{"datum":"2026-10-19T14:13:52+02:00","status":"Die Sendung liegt in der Packstation zur Abholung bereit."},{"datum":"2026-10-21T15:29:34+02:00","status":"Abholung aus Packstation"}]},"zustellung":{"hasDeliveryDateMismatch":false}}}"#)!
         let s = DHLOeffentlichAnbieter.lesen(j)

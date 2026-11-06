@@ -9,6 +9,7 @@ struct PaketboteWidgets: WidgetBundle {
     init() { Sprache.laden() }
     var body: some Widget {
         PaketeWidget()
+        EinfachesWidget()
         #if os(iOS)
         PaketAktivitaetWidget()
         #endif
@@ -85,7 +86,9 @@ struct Zeitleiste: AppIntentTimelineProvider {
         }
         if ha.eingerichtet {
             do {
-                var u = try await ha.laden(zeit: 12)
+                // harte Grenze: WidgetKit beendet Widgets, die zu lange brauchen – dann bliebe nur der Platzhalter
+                let h = ha
+                var u = try await mitFrist(9) { try await h.laden(zeit: 8) }
                 // direkt verfolgte Sendungen aus dem letzten Stand der App behalten
                 let direkt = (e.daten.uebersicht?.sendungen ?? []).filter { $0.quelle == "direkt" }
                 u.sendungen = zusammenfuehren(ha: u.sendungen, direkt: direkt)
@@ -103,6 +106,70 @@ struct Zeitleiste: AppIntentTimelineProvider {
         }
         e.daten.inhalt = configuration.inhalt.rawValue
         return e
+    }
+}
+
+/// Höchstens [sekunden] warten, sonst Fehler „nicht erreichbar“ (statt hängen zu bleiben)
+func mitFrist<T: Sendable>(_ sekunden: Double, _ arbeit: @escaping @Sendable () async throws -> T) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { g in
+        g.addTask { try await arbeit() }
+        g.addTask {
+            try await Task.sleep(nanoseconds: UInt64(sekunden * 1_000_000_000))
+            throw HAFehler(status: 0, adresse: "")
+        }
+        defer { g.cancelAll() }
+        guard let erstes = try await g.next() else { throw HAFehler(status: 0, adresse: "") }
+        return erstes
+    }
+}
+
+/// Einfaches Widget ohne Einstellungen (falls das Widget mit Einstellungen auf einem neu signierten Gerät
+/// nur den Platzhalter zeigt): nimmt den Zugang, den die App teilt oder den das andere Widget zuletzt benutzt hat.
+struct EinfacheZeitleiste: TimelineProvider {
+    func placeholder(in context: Context) -> Eintrag { Zeitleiste().placeholder(in: context) }
+
+    func getSnapshot(in context: Context, completion: @escaping (Eintrag) -> Void) {
+        let u = Ablage.lesen()
+        completion(Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u, eingerichtet: u != nil || Ablage.zugang.eingerichtet || WidgetZugangSpeicher.zugang.eingerichtet)))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Eintrag>) -> Void) {
+        Task {
+            let u0 = Ablage.lesen()
+            var e = Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u0, eingerichtet: u0 != nil))
+            let ha = Ablage.zugang.eingerichtet ? Ablage.zugang : WidgetZugangSpeicher.zugang
+            if ha.eingerichtet {
+                e.daten.eingerichtet = true
+                do {
+                    var u = try await mitFrist(9) { try await ha.laden(zeit: 8) }
+                    u.sendungen = zusammenfuehren(ha: u.sendungen, direkt: (u0?.sendungen ?? []).filter { $0.quelle == "direkt" })
+                    e = Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u, eingerichtet: true))
+                    e.daten.knoepfe = true
+                    Ablage.schreiben(u)
+                } catch let f as HAFehler {
+                    e.daten.fehler = f.text
+                } catch {
+                    e.daten.fehler = error.localizedDescription
+                }
+            }
+            let mitternacht = Calendar.current.startOfDay(for: Date().addingTimeInterval(86400))
+            completion(Timeline(entries: [e], policy: .after(min(Date().addingTimeInterval(e.daten.fehler.isEmpty ? 1800 : 600), mitternacht))))
+        }
+    }
+}
+
+struct EinfachesWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "pakete-einfach", provider: EinfacheZeitleiste()) { e in
+            WidgetInhalt(e: e)
+        }
+        .configurationDisplayName(T("Post & Pakete (einfach)"))
+        .description(T("Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets."))
+        #if os(iOS)
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        #else
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        #endif
     }
 }
 

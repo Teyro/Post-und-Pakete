@@ -26,8 +26,8 @@ struct DetailAnsicht: View {
                 kopf
                 if sendung.zumAbholen { AbholKarte(kern: kern, sendung: sendung) }
                 if let bis = sendung.rueckgabeBis, bis >= Calendar.current.startOfDay(for: Date()) { RueckgabeKarte(kern: kern, sendung: sendung, bis: bis) }
-                if !sendung.zumAbholen && !sendung.ereignisse.filter({ !$0.ort.isEmpty }).isEmpty {
-                    StationenKarte(ereignisse: sendung.ereignisse)
+                if !sendung.zumAbholen && !anzeige.ereignisse.filter({ !$0.ort.isEmpty }).isEmpty {
+                    StationenKarte(ereignisse: anzeige.ereignisse)
                         .frame(height: 220)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
@@ -46,6 +46,7 @@ struct DetailAnsicht: View {
             fotoLaden()
             fragt = true
             await kern.jetztAbfragen(sendung)
+            await kern.mehrLaden(sendung)
             fragt = false
         }
         .onChange(of: fotoWahl) { _, neu in
@@ -77,48 +78,75 @@ struct DetailAnsicht: View {
             .filter { !$0.isEmpty }.joined(separator: "\n")
     }
 
+    /// Sendung mit dem, was DHL mit der Postleitzahl zusätzlich weiß (Termin, Orte)
+    private var anzeige: Sendung {
+        var s = sendung
+        if let m = kern.mehr[sendung.nummer] {
+            if !s.fertig && !m.erwartet.isEmpty && s.erwartet.isEmpty { s.erwartet = m.erwartet; s.zeitfenster = m.zeitfenster }
+            if m.ereignisse.count >= s.ereignisse.count && m.ereignisse.contains(where: { !$0.ort.isEmpty }) { s.ereignisse = m.ereignisse }
+        }
+        s.ereignisse = Self.ohneDoppelte(s.ereignisse)
+        return s
+    }
+
+    /// Gleiche Meldung zur gleichen Minute nur einmal (kommt doppelt, wenn zwei Quellen sie liefern)
+    static func ohneDoppelte(_ e: [Ereignis]) -> [Ereignis] {
+        var gesehen = Set<String>()
+        return e.filter { x in
+            let minute = x.zeit.map { Int($0.timeIntervalSince1970 / 60) } ?? -1
+            return gesehen.insert("\(minute)|\(x.text.split(whereSeparator: \.isWhitespace).joined(separator: " "))").inserted
+        }
+    }
+
     private var kopf: some View {
-        HStack(alignment: .top, spacing: 14) {
-            DienstLogo(dienst: sendung.dienst, groesse: 64)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    if sendung.ruecksendung { Etikett(text: T("Rücksendung"), farbe: .purple) }
-                    if fragt { ProgressView().controlSize(.small) }
+        let s = anzeige
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
+                DienstLogo(dienst: s.dienst, groesse: 58)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        if s.ruecksendung { Etikett(text: T("Rücksendung"), farbe: .purple) }
+                        Text(s.dienstName).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                        if fragt { ProgressView().controlSize(.mini) }
+                    }
+                    Text(s.titel).font(.title2.weight(.bold)).lineLimit(2)
+                    if let a = absenderZeile { Text(a).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
                 }
-                Text(sendung.titel).font(.title2.weight(.bold)).lineLimit(2)
-                if !sendung.name.isEmpty && !sendung.absender.isEmpty && sendung.name != sendung.absender {
-                    Text(sendung.absender).font(.subheadline).foregroundStyle(.secondary)
-                }
-                Text(Texte.stand(sendung))
-                    .font(.headline)
-                    .foregroundStyle(standFarbe(sendung))
-                if !sendung.statusText.isEmpty {
-                    Text(sendung.statusText).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                Fortschritt(sendung: sendung, hoehe: 6).padding(.top, 2)
+                Spacer(minLength: 0)
+            }
+            TerminZeile(sendung: s)
+            VStack(alignment: .leading, spacing: 5) {
+                Fortschritt(sendung: s, hoehe: 6)
                 HStack {
                     Text(T("angekündigt")); Spacer(); Text(T("unterwegs")); Spacer(); Text(T("in Zustellung")); Spacer(); Text(T("zugestellt"))
                 }
-                .font(.system(size: 10))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
             }
+            if !s.statusText.isEmpty {
+                Text(s.statusText).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .padding(16)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    /// Absender unter dem Namen: aus der Mail oder von DHL (mit PLZ)
+    private var absenderZeile: String? {
+        if !sendung.name.isEmpty && !sendung.absender.isEmpty && sendung.name != sendung.absender { return sendung.absender }
+        if let a = kern.mehr[sendung.nummer]?.absender, !a.isEmpty, a != sendung.titel { return a }
+        return nil
     }
 
     private var knoepfe: some View {
         HStack(spacing: 10) {
             if let u = sendung.verfolgenURL {
-                Link(destination: u) { Label(T("Beim Dienst"), systemImage: "safari").frame(maxWidth: .infinity) }
-                    .buttonStyle(.bordered)
+                Link(destination: u) { AktionsInhalt(titel: T("Beim Dienst"), symbol: "safari") }
             }
             if sendung.erledigt {
-                Button { Task { await kern.erledigt(sendung, false) } } label: {
-                    Label(T("Doch nicht da"), systemImage: "arrow.uturn.backward").frame(maxWidth: .infinity)
-                }.buttonStyle(.bordered)
+                Button { Task { await kern.erledigt(sendung, false) } } label: { AktionsInhalt(titel: T("Doch nicht da"), symbol: "arrow.uturn.backward") }
             } else if !sendung.fertig {
-                Button { Task { await kern.erledigt(sendung, true) } } label: {
-                    Label(T("Angekommen"), systemImage: "checkmark").frame(maxWidth: .infinity)
-                }.buttonStyle(.borderedProminent)
+                Button { Task { await kern.erledigt(sendung, true) } } label: { AktionsInhalt(titel: T("Angekommen"), symbol: "checkmark", hervorgehoben: true) }
             }
             Menu {
                 Button { neuerName = sendung.name; umbenennen = true } label: { Label(T("Umbenennen"), systemImage: "pencil") }
@@ -134,20 +162,19 @@ struct DetailAnsicht: View {
                     Button(role: .destructive) { Task { await kern.entfernen(sendung) } } label: { Label(T("Entfernen"), systemImage: "trash") }
                 }
             } label: {
-                Image(systemName: "ellipsis").frame(width: 28, height: 20)
+                AktionsInhalt(titel: T("Mehr"), symbol: "ellipsis")
             }
             .menuIndicator(.hidden)
-            .fixedSize()
-            .buttonStyle(.bordered)
         }
-        .controlSize(.large)
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private var verlauf: some View {
+        let ereignisse = anzeige.ereignisse
         VStack(alignment: .leading, spacing: 0) {
             Text(T("Verlauf")).font(.headline).padding(.bottom, 8)
-            if sendung.ereignisse.isEmpty {
+            if ereignisse.isEmpty {
                 Text(sendung.verfolgenURL == nil ? T("Noch keine Stationen bekannt.")
                      : T("Noch keine Stationen bekannt. Den genauen Verlauf zeigt die Seite des Dienstes – oder unter Einstellungen → Direkt verfolgen einen Anbieter eintragen."))
                     .font(.callout).foregroundStyle(.secondary)
@@ -157,14 +184,14 @@ struct DetailAnsicht: View {
                     }
                 }
             }
-            ForEach(Array(sendung.ereignisse.enumerated()), id: \.element.id) { i, e in
+            ForEach(Array(ereignisse.enumerated()), id: \.offset) { i, e in
                 HStack(alignment: .top, spacing: 12) {
                     VStack(spacing: 0) {
                         Circle()
                             .fill(i == 0 ? Color.accentColor : Color.secondary.opacity(0.5))
                             .frame(width: 11, height: 11)
                             .padding(.top, 4)
-                        if i < sendung.ereignisse.count - 1 {
+                        if i < ereignisse.count - 1 {
                             Rectangle().fill(Color.secondary.opacity(0.3)).frame(width: 2)
                         }
                     }
@@ -179,8 +206,8 @@ struct DetailAnsicht: View {
                 }
             }
         }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(16)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     /// Notiz und Foto (bleiben auf diesem Gerät)
@@ -221,9 +248,16 @@ struct DetailAnsicht: View {
             if kern.mehrereKonten && !sendung.kontoName.isEmpty { zeile(T("Postfach"), sendung.kontoName) }
             zeile(T("Letzte Meldung"), sendung.datum.formatted(date: .abbreviated, time: .shortened))
             if sendung.manuell { zeile(T("Hinzugefügt"), T("von Hand")) }
+            if let m = kern.mehr[sendung.nummer] {
+                if !m.absender.isEmpty { zeile(T("Absender (DHL)"), m.absender) }
+                if !m.empfaenger.isEmpty { zeile(T("Adressiert an"), m.empfaenger) }
+            }
         }
         .font(.callout)
         .textSelection(.enabled)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func zeile(_ a: String, _ b: String) -> some View {
@@ -394,5 +428,65 @@ struct RueckgabeKarte: View {
         }
         .padding()
         .background(Color.purple.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+/// Großer Termin: Kalenderblatt + „Voraussichtliche Zustellung · Samstag, 7. November“ (sonst der Stand)
+struct TerminZeile: View {
+    let sendung: Sendung
+
+    var body: some View {
+        let farbe = standFarbe(sendung)
+        HStack(spacing: 12) {
+            if let d = sendung.erwartetTag(), !sendung.fertig {
+                VStack(spacing: 0) {
+                    Text(d.formatted(.dateTime.weekday(.abbreviated)).uppercased())
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 2)
+                        .background(Color.accentColor)
+                    Text(d.formatted(.dateTime.day()))
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(width: 48, height: 50)
+                .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.primary.opacity(0.1)))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(T("Voraussichtliche Zustellung")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(d.formatted(.dateTime.weekday(.wide).day().month(.wide)) + (sendung.zeitfenster.isEmpty ? "" : " · " + sendung.zeitfenster))
+                        .font(.headline)
+                    Text(Texte.stand(sendung)).font(.subheadline.weight(.medium)).foregroundStyle(farbe)
+                }
+            } else {
+                Image(systemName: sendung.fertig ? "checkmark.circle.fill" : sendung.problem ? "exclamationmark.triangle.fill" : sendung.stand == "abholbereit" ? "building.2.fill" : "shippingbox.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(sendung.fertig ? Color.green : farbe == .secondary ? Color.accentColor : farbe)
+                    .frame(width: 48, height: 50)
+                Text(Texte.stand(sendung)).font(.headline).foregroundStyle(farbe == .secondary ? Color.primary : farbe)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+/// Inhalt eines Aktionsknopfs: Symbol über kurzem Text, alle gleich groß
+struct AktionsInhalt: View {
+    let titel: String
+    let symbol: String
+    var hervorgehoben = false
+
+    var body: some View {
+        VStack(spacing: 5) {
+            Image(systemName: symbol).font(.system(size: 18, weight: .semibold)).frame(height: 22)
+            Text(titel).font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(hervorgehoben ? Color.white : Color.accentColor)
+        .frame(maxWidth: .infinity, minHeight: 60)
+        .background(hervorgehoben ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.accentColor.opacity(0.13)),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }

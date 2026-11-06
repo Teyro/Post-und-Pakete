@@ -26,9 +26,11 @@
 "Abholen" = "Abholen";
 "Abholen bis %1" = "Abholen bis %1";
 "Abholstelle" = "Abholstelle";
+"Absender (DHL)" = "Absender (DHL)";
 "Absender unbekannt" = "Absender unbekannt";
 "Adresse" = "Adresse";
 "Adresse, z. B. http://homeassistant.local:8123" = "Adresse, z. B. http://homeassistant.local:8123";
+"Adressiert an" = "Adressiert an";
 "Aktualisieren" = "Aktualisieren";
 "Alle" = "Alle";
 "Alle anzeigen …" = "Alle anzeigen …";
@@ -73,6 +75,7 @@
 "Dazu kommt ein Brief von %1." = "Dazu kommt ein Brief von %1.";
 "Dez" = "Dez";
 "DHL live" = "DHL live";
+"DHL mit Postleitzahl" = "DHL mit Postleitzahl";
 "DHL und Deutsche Post über die öffentliche Sendungsverfolgung – zwei Adressen als Ersatz" = "DHL und Deutsche Post über die öffentliche Sendungsverfolgung – zwei Adressen als Ersatz";
 "DHL-API-Schlüssel" = "DHL-API-Schlüssel";
 "DHL-Schlüssel (kostenlos)" = "DHL-Schlüssel (kostenlos)";
@@ -167,6 +170,7 @@
 "Mo" = "Mo";
 "Monat" = "Monat";
 "morgen" = "morgen";
+"Morgen · %1" = "Morgen · %1";
 "Morgen erinnern" = "Morgen erinnern";
 "Morgen früh" = "Morgen früh";
 "Nach der Zustellung an die Rücksendefrist erinnern" = "Nach der Zustellung an die Rücksendefrist erinnern";
@@ -195,6 +199,7 @@
 "Öffentliche Seiten fragen (DHL ohne Schlüssel, GLS, DPD)" = "Öffentliche Seiten fragen (DHL ohne Schlüssel, GLS, DPD)";
 "Offizielle DHL-Schnittstelle – eigener kostenloser Schlüssel" = "Offizielle DHL-Schnittstelle – eigener kostenloser Schlüssel";
 "Offizielle UPS-Schnittstelle – eigener kostenloser Zugang" = "Offizielle UPS-Schnittstelle – eigener kostenloser Zugang";
+"Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets." = "Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets.";
 "Okt" = "Okt";
 "Paket" = "Paket";
 "Paketdienst" = "Paketdienst";
@@ -203,6 +208,7 @@
 "Pakete (%1)" = "Pakete (%1)";
 "Paketschein scannen" = "Paketschein scannen";
 "Post & Pakete" = "Post & Pakete";
+"Post & Pakete (einfach)" = "Post & Pakete (einfach)";
 "Post & Pakete %1 ist da" = "Post & Pakete %1 ist da";
 "Post & Pakete auf dem iPhone öffnen." = "Post & Pakete auf dem iPhone öffnen.";
 "Post & Pakete auf GitHub" = "Post & Pakete auf GitHub";
@@ -214,6 +220,7 @@
 "Post pro Monat" = "Post pro Monat";
 "Postfach" = "Postfach";
 "Postfach jetzt lesen" = "Postfach jetzt lesen";
+"Postleitzahl, z. B. 22087" = "Postleitzahl, z. B. 22087";
 "Problem bei der Zustellung" = "Problem bei der Zustellung";
 "Quelle" = "Quelle";
 "Route starten" = "Route starten";
@@ -245,6 +252,7 @@
 "Tippen, um die neue Version zu laden und zu signieren." = "Tippen, um die neue Version zu laden und zu signieren.";
 "Token" = "Token";
 "Über" = "Über";
+"Überfällig" = "Überfällig";
 "überfällig seit %1" = "überfällig seit %1";
 "Umbenennen" = "Umbenennen";
 "und" = "und";
@@ -252,6 +260,7 @@
 "Unerwartete Antwort von Home Assistant." = "Unerwartete Antwort von Home Assistant.";
 "unterwegs" = "unterwegs";
 "Unterwegs" = "Unterwegs";
+"Unterwegs ohne Termin" = "Unterwegs ohne Termin";
 "Update auf %1 bitte von GitHub laden." = "Update auf %1 bitte von GitHub laden.";
 "Update auf %1 installieren" = "Update auf %1 installieren";
 "Update auf %1 installieren …" = "Update auf %1 installieren …";
@@ -274,10 +283,12 @@
 "vor %1 h" = "vor %1 h";
 "vor %1 min" = "vor %1 min";
 "voraussichtlich %1" = "voraussichtlich %1";
+"Voraussichtliche Zustellung" = "Voraussichtliche Zustellung";
 "Wichtig" = "Wichtig";
 "Wichtig: %1." = "Wichtig: %1.";
 "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen" = "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen";
 "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App." = "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App.";
+"Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL." = "Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL.";
 "Willkommen bei Post & Pakete" = "Willkommen bei Post & Pakete";
 "z. B. „Beim Nachbarn abgegeben“" = "z. B. „Beim Nachbarn abgegeben“";
 "z. B. Steuerbescheid, Frist 30.11." = "z. B. Steuerbescheid, Frist 30.11.";

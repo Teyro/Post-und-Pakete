@@ -148,7 +148,14 @@ function dhlOeffentlich(s) {
     var zu = !!d.istZugestellt;
     var stand = zu ? "zugestellt" : standAusText(ev.length ? ev[0].text : text);
     if (!zu && stand === "zugestellt") stand = standAusText(text);
-    return spur({ stand: stand, text: text, ereignisse: ev, ende: zu });
+    // Voraussichtliche Zustellung: zustellung.zustellzeitfensterVon/Bis ("2026-11-07" oder mit Uhrzeit)
+    var z = d.zustellung || {}, von = String(z.zustellzeitfensterVon || ""), bis = String(z.zustellzeitfensterBis || "");
+    var erwartet = "", fenster = "";
+    if (!zu && /^\d{4}-\d{2}-\d{2}/.test(von)) {
+        erwartet = von.slice(0, 10);
+        if (von.indexOf("T") > 0 && bis.indexOf("T") > 0 && von.slice(0, 10) === bis.slice(0, 10)) fenster = von.slice(11, 16) + "–" + bis.slice(11, 16);
+    }
+    return spur({ stand: stand, text: text, ereignisse: ev, ende: zu, erwartet: erwartet, zeitfenster: fenster });
 }
 
 // --- Anbieter ---
