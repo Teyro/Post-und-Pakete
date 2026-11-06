@@ -456,7 +456,7 @@ struct TerminZeile: View {
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.primary.opacity(0.1)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(T("Voraussichtliche Zustellung")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    Text(d.formatted(.dateTime.weekday(.wide).day().month(.wide)) + (sendung.zeitfenster.isEmpty ? "" : " · " + sendung.zeitfenster))
+                    Text(d.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                         .font(.headline)
                     Text(Texte.stand(sendung)).font(.subheadline.weight(.medium)).foregroundStyle(farbe)
                 }
