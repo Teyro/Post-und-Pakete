@@ -61,6 +61,7 @@
 "Beenden" = "Beenden";
 "Beim Dienst" = "Beim Dienst";
 "Beim Dienst verfolgen" = "Beim Dienst verfolgen";
+"Berichte der Widgets laden" = "Berichte der Widgets laden";
 "Bitte wählen" = "Bitte wählen";
 "Brief angekündigt" = "Brief angekündigt";
 "Brief von %1" = "Brief von %1";
@@ -70,6 +71,7 @@
 "Briefe heute" = "Briefe heute";
 "Briefe und Pakete" = "Briefe und Pakete";
 "Dafür die Integration in Home Assistant aktualisieren." = "Dafür die Integration in Home Assistant aktualisieren.";
+"Dafür die Integration in Home Assistant auf 1.9 aktualisieren." = "Dafür die Integration in Home Assistant auf 1.9 aktualisieren.";
 "Das Token legst du in Home Assistant an: unten links auf deinen Namen → Sicherheit → Langlebige Zugriffstoken." = "Das Token legst du in Home Assistant an: unten links auf deinen Namen → Sicherheit → Langlebige Zugriffstoken.";
 "Dazu kommen %1 Briefe: %2." = "Dazu kommen %1 Briefe: %2.";
 "Dazu kommt ein Brief von %1." = "Dazu kommt ein Brief von %1.";
@@ -85,6 +87,7 @@
 "Die Integration „Briefankündigung“ fehlt in Home Assistant (HACS, ab Version 1.4)." = "Die Integration „Briefankündigung“ fehlt in Home Assistant (HACS, ab Version 1.4).";
 "Die Nummer kenne ich nicht – bitte in der App mit Paketdienst hinzufügen." = "Die Nummer kenne ich nicht – bitte in der App mit Paketdienst hinzufügen.";
 "Die Nummer passt zu mehreren Diensten – bitte den Paketdienst wählen." = "Die Nummer passt zu mehreren Diensten – bitte den Paketdienst wählen.";
+"Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)." = "Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte).";
 "Dienst" = "Dienst";
 "Direkt verfolgen" = "Direkt verfolgen";
 "Direkt verfolgen – Anbieter" = "Direkt verfolgen – Anbieter";
@@ -112,7 +115,7 @@
 "Fertig" = "Fertig";
 "Foto entfernen" = "Foto entfernen";
 "Foto ersetzen" = "Foto ersetzen";
-"Foto hinzufügen" = "Foto hinzufügen";
+"Foto hinzufügen (z. B. Rücksende-QR)" = "Foto hinzufügen (z. B. Rücksende-QR)";
 "Fr" = "Fr";
 "Für %1 ist noch kein Anbieter eingerichtet (Einstellungen → Direkt verfolgen)." = "Für %1 ist noch kein Anbieter eingerichtet (Einstellungen → Direkt verfolgen).";
 "Für Verlauf und Umbenennen die Integration auf 1.5 aktualisieren." = "Für Verlauf und Umbenennen die Integration auf 1.5 aktualisieren.";
@@ -128,6 +131,7 @@
 "Heute kommt ein Paket: %1." = "Heute kommt ein Paket: %1.";
 "Heute kommt kein Paket, und es ist auch keins unterwegs." = "Heute kommt kein Paket, und es ist auch keins unterwegs.";
 "Heute kommt kein Paket. Unterwegs: %1." = "Heute kommt kein Paket. Unterwegs: %1.";
+"Heute letzter Abholtag" = "Heute letzter Abholtag";
 "Hinzufügen" = "Hinzufügen";
 "Hinzufügen …" = "Hinzufügen …";
 "Hinzugefügt" = "Hinzugefügt";
@@ -161,6 +165,7 @@
 "Leer lassen, um wieder den Absender zu zeigen." = "Leer lassen, um wieder den Absender zu zeigen.";
 "Letzte Meldung" = "Letzte Meldung";
 "Links einen Brief oder ein Paket wählen." = "Links einen Brief oder ein Paket wählen.";
+"Live von DHL" = "Live von DHL";
 "Live-Aktivität für Pakete, die heute kommen" = "Live-Aktivität für Pakete, die heute kommen";
 "Mai" = "Mai";
 "Mär" = "Mär";
@@ -182,10 +187,16 @@
 "Neue Versionen werden geladen, geprüft und installiert; die App startet dann kurz neu." = "Neue Versionen werden geladen, geprüft und installiert; die App startet dann kurz neu.";
 "nicht erreichbar" = "nicht erreichbar";
 "Nichts gewählt" = "Nichts gewählt";
+"Noch %1 Tage abholen" = "Noch %1 Tage abholen";
+"Noch bis morgen abholen" = "Noch bis morgen abholen";
+"Noch etwas mehr als %1 Zustellstopps" = "Noch etwas mehr als %1 Zustellstopps";
+"Noch kein Bericht. Dann startet iOS das Widget gar nicht – oder es hat keinen Zugang: Widget lange drücken → „Widget bearbeiten“ → Adresse und Token eintragen und eine Minute warten." = "Noch kein Bericht. Dann startet iOS das Widget gar nicht – oder es hat keinen Zugang: Widget lange drücken → „Widget bearbeiten“ → Adresse und Token eintragen und eine Minute warten.";
 "Noch keine Stationen bekannt." = "Noch keine Stationen bekannt.";
 "Noch keine Stationen bekannt. Den genauen Verlauf zeigt die Seite des Dienstes – oder unter Einstellungen → Direkt verfolgen einen Anbieter eintragen." = "Noch keine Stationen bekannt. Den genauen Verlauf zeigt die Seite des Dienstes – oder unter Einstellungen → Direkt verfolgen einen Anbieter eintragen.";
 "Noch nicht eingerichtet." = "Noch nicht eingerichtet.";
 "Notiz" = "Notiz";
+"Notiz für den Haushalt und Foto" = "Notiz für den Haushalt und Foto";
+"Notiz nur auf diesem Gerät – zum Teilen die Integration auf 1.9 aktualisieren." = "Notiz nur auf diesem Gerät – zum Teilen die Integration auf 1.9 aktualisieren.";
 "Notiz und Foto" = "Notiz und Foto";
 "Nov" = "Nov";
 "Nummer aus der Zwischenablage" = "Nummer aus der Zwischenablage";
@@ -193,6 +204,9 @@
 "Nummer kopieren" = "Nummer kopieren";
 "Nummer kopiert" = "Nummer kopiert";
 "Nur Briefe" = "Nur Briefe";
+"Nur noch %1 Zustellstopps" = "Nur noch %1 Zustellstopps";
+"Nur noch 1 Zustellstopp" = "Nur noch 1 Zustellstopp";
+"Nur noch wenige Zustellstopps" = "Nur noch wenige Zustellstopps";
 "Nur Pakete" = "Nur Pakete";
 "Öffentliche DPD-Seite – inoffiziell" = "Öffentliche DPD-Seite – inoffiziell";
 "Öffentliche GLS-Seite – inoffiziell" = "Öffentliche GLS-Seite – inoffiziell";
@@ -226,6 +240,8 @@
 "Route starten" = "Route starten";
 "Route zur Abholstelle" = "Route zur Abholstelle";
 "Rückgabe bis %1" = "Rückgabe bis %1";
+"Rückgabe noch %1 Tage" = "Rückgabe noch %1 Tage";
+"Rückgabe nur noch heute" = "Rückgabe nur noch heute";
 "Rückgabe: %1" = "Rückgabe: %1";
 "Rücksendefrist bis %1 (laut Shop, ohne Gewähr)." = "Rücksendefrist bis %1 (laut Shop, ohne Gewähr).";
 "Rücksendefrist laut Shop (ohne Gewähr)" = "Rücksendefrist laut Shop (ohne Gewähr)";
@@ -247,6 +263,7 @@
 "Sichern" = "Sichern";
 "So" = "So";
 "Stand" = "Stand";
+"Stand %1" = "Stand %1";
 "Statistik" = "Statistik";
 "Teilen" = "Teilen";
 "Tippen, um die neue Version zu laden und zu signieren." = "Tippen, um die neue Version zu laden und zu signieren.";
@@ -278,19 +295,22 @@
 "Versandmails von DHL, Hermes, DPD, GLS, UPS und Amazon erscheinen hier – oder eine Sendung mit ＋ hinzufügen." = "Versandmails von DHL, Hermes, DPD, GLS, UPS und Amazon erscheinen hier – oder eine Sendung mit ＋ hinzufügen.";
 "Version" = "Version";
 "Version %1 ist da" = "Version %1 ist da";
+"von %1" = "von %1";
 "Von der ersten Station bis zur Zustellung – aus Sendungen mit Verlauf." = "Von der ersten Station bis zur Zustellung – aus Sendungen mit Verlauf.";
 "von Hand" = "von Hand";
 "vor %1 h" = "vor %1 h";
 "vor %1 min" = "vor %1 min";
 "voraussichtlich %1" = "voraussichtlich %1";
 "Voraussichtliche Zustellung" = "Voraussichtliche Zustellung";
+"Vorzeigen" = "Vorzeigen";
 "Wichtig" = "Wichtig";
 "Wichtig: %1." = "Wichtig: %1.";
 "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen" = "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen";
+"Widget-Diagnose" = "Widget-Diagnose";
 "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App." = "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App.";
 "Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL." = "Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL.";
 "Willkommen bei Post & Pakete" = "Willkommen bei Post & Pakete";
-"z. B. „Beim Nachbarn abgegeben“" = "z. B. „Beim Nachbarn abgegeben“";
+"z. B. „Beim Nachbarn Nr. 12“ oder „Hab ich angenommen“" = "z. B. „Beim Nachbarn Nr. 12“ oder „Hab ich angenommen“";
 "z. B. Steuerbescheid, Frist 30.11." = "z. B. Steuerbescheid, Frist 30.11.";
 "Zeigen" = "Zeigen";
 "zugestellt" = "zugestellt";

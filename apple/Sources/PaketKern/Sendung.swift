@@ -52,11 +52,15 @@ public struct Sendung: Codable, Hashable, Sendable, Identifiable {
     public var abholfrist: String = ""
     /// Rücksendefrist von Home Assistant ("" = selbst ausrechnen)
     public var ruecksendefrist: String = ""
+    /// Gemeinsame Notiz aus Home Assistant („Beim Nachbarn Nr. 12“) – wer und wann
+    public var notiz: String = ""
+    public var notizVon: String = ""
+    public var notizZeit: Date?
 
     enum CodingKeys: String, CodingKey {
         case id, datum, absender, name, nummer, dienst, dienstName, stand, erwartet, zeitfenster, kundenkonto, verfolgen, manuell, statusText,
              problem, erledigt, kontoId, kontoName, ereignisse, quelle, anbieter, ruecksendung, abholcode, abholort, abholadresse, abholfrist,
-             ruecksendefrist
+             ruecksendefrist, notiz, notizVon, notizZeit
     }
 
     // gespeicherte Sendungen älterer Versionen kennen nicht alle Felder – fehlende bleiben leer
@@ -76,6 +80,8 @@ public struct Sendung: Codable, Hashable, Sendable, Identifiable {
         quelle = t(.quelle).isEmpty ? "ha" : t(.quelle); anbieter = t(.anbieter); ruecksendung = j(.ruecksendung)
         abholcode = t(.abholcode); abholort = t(.abholort); abholadresse = t(.abholadresse); abholfrist = t(.abholfrist)
         ruecksendefrist = t(.ruecksendefrist)
+        notiz = t(.notiz); notizVon = t(.notizVon)
+        notizZeit = (try? c.decodeIfPresent(Date.self, forKey: .notizZeit)) ?? nil
     }
 
     /// Bis wann zurückschicken (von Home Assistant, sonst aus Shop und Zustelltag) – nil, wenn unbekannt
@@ -247,6 +253,9 @@ public struct Uebersicht: Codable, Hashable, Sendable {
             s.abholadresse = b["abholadresse"]?.text ?? ""
             s.abholfrist = b["abholfrist"]?.text ?? ""
             s.ruecksendefrist = b["ruecksendefrist"]?.text ?? ""
+            s.notiz = b["notiz"]?.text ?? ""
+            s.notizVon = b["notiz_von"]?.text ?? ""
+            s.notizZeit = zeit(b["notiz_zeit"])
             return s
         }
         let konten: [Konto] = (j["konten"]?.liste ?? []).compactMap { k in

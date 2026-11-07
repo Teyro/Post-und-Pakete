@@ -19,11 +19,13 @@ struct DetailAnsicht: View {
     @State private var fotoWahl: PhotosPickerItem?
     @State private var foto: Image?
     @State private var fragt = false
+    @State private var vorzeigen = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 kopf
+                if let live = kern.mehr[sendung.nummer]?.live, !live.isEmpty, !sendung.fertig, sendung.stand != "abholbereit" { LiveKarte(text: live, zeit: kern.mehr[sendung.nummer]?.liveZeit) }
                 if sendung.zumAbholen { AbholKarte(kern: kern, sendung: sendung) }
                 if let bis = sendung.rueckgabeBis, bis >= Calendar.current.startOfDay(for: Date()) { RueckgabeKarte(kern: kern, sendung: sendung, bis: bis) }
                 if !sendung.zumAbholen && !anzeige.ereignisse.filter({ !$0.ort.isEmpty }).isEmpty {
@@ -42,12 +44,17 @@ struct DetailAnsicht: View {
         }
         .navigationTitle(sendung.titel)
         .task(id: sendung.id) {
-            notiz = kern.notiz(sendung.id)
+            notiz = sendung.notiz.isEmpty ? kern.notiz(sendung.id) : sendung.notiz
             fotoLaden()
             fragt = true
             await kern.jetztAbfragen(sendung)
             await kern.mehrLaden(sendung)
             fragt = false
+            // am Zustelltag: Live-Stopps nachladen, solange die Sendung offen ist
+            while !Task.isCancelled && sendung.stand == "heute" && !kern.einstellungen.plz.isEmpty {
+                try? await Task.sleep(nanoseconds: 120_000_000_000)
+                await kern.mehrLaden(sendung)
+            }
         }
         .onChange(of: fotoWahl) { _, neu in
             Task {
@@ -64,6 +71,7 @@ struct DetailAnsicht: View {
                 ShareLink(item: teilenText) { Label(T("Teilen"), systemImage: "square.and.arrow.up") }
             }
         }
+        .sheet(isPresented: $vorzeigen) { VorzeigenAnsicht(sendung: sendung, foto: foto) }
         .alert(T("Umbenennen"), isPresented: $umbenennen) {
             TextField(T("Name"), text: $neuerName)
             Button(T("Sichern")) { Task { await kern.umbenennen(sendung, neuerName) } }
@@ -131,6 +139,11 @@ struct DetailAnsicht: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
+    /// Abholcode, oder ein Foto (z. B. QR-Code fürs Rücksendeetikett) bei Rücksendungen und zum Abholen
+    private var kannVorzeigen: Bool {
+        (sendung.zumAbholen && !sendung.abholcode.isEmpty) || (foto != nil && (sendung.ruecksendung || sendung.zumAbholen || !sendung.fertig))
+    }
+
     /// Absender unter dem Namen: aus der Mail oder von DHL (mit PLZ)
     private var absenderZeile: String? {
         if !sendung.name.isEmpty && !sendung.absender.isEmpty && sendung.name != sendung.absender { return sendung.absender }
@@ -142,6 +155,9 @@ struct DetailAnsicht: View {
         HStack(spacing: 10) {
             if let u = sendung.verfolgenURL {
                 Link(destination: u) { AktionsInhalt(titel: T("Beim Dienst"), symbol: "safari") }
+            }
+            if kannVorzeigen {
+                Button { vorzeigen = true } label: { AktionsInhalt(titel: T("Vorzeigen"), symbol: "qrcode") }
             }
             if sendung.erledigt {
                 Button { Task { await kern.erledigt(sendung, false) } } label: { AktionsInhalt(titel: T("Doch nicht da"), symbol: "arrow.uturn.backward") }
@@ -213,15 +229,20 @@ struct DetailAnsicht: View {
     /// Notiz und Foto (bleiben auf diesem Gerät)
     private var notizUndFoto: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(T("Notiz und Foto")).font(.headline)
-            TextField(T("z. B. „Beim Nachbarn abgegeben“"), text: $notiz, axis: .vertical)
+            Text(sendung.quelle == "ha" && kern.einstellungen.eingerichtet ? T("Notiz für den Haushalt und Foto") : T("Notiz und Foto")).font(.headline)
+            TextField(T("z. B. „Beim Nachbarn Nr. 12“ oder „Hab ich angenommen“"), text: $notiz, axis: .vertical)
                 .lineLimit(1...5)
                 .textFieldStyle(.roundedBorder)
-                .onSubmit { kern.notizSetzen(sendung.id, notiz) }
+                .onSubmit { Task { await kern.notizTeilen(sendung, notiz) } }
                 .onChange(of: notiz) { _, t in kern.notizSetzen(sendung.id, t) }
+                .onDisappear { Task { await kern.notizTeilen(sendung, notiz) } }
+            if !sendung.notiz.isEmpty && !sendung.notizVon.isEmpty {
+                Text(T("von %1", sendung.notizVon) + (sendung.notizZeit.map { " · " + Texte.ereigniszeit($0) } ?? ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             HStack {
                 PhotosPicker(selection: $fotoWahl, matching: .images) {
-                    Label(foto == nil ? T("Foto hinzufügen") : T("Foto ersetzen"), systemImage: "photo")
+                    Label(foto == nil ? T("Foto hinzufügen (z. B. Rücksende-QR)") : T("Foto ersetzen"), systemImage: "photo")
                 }
                 if foto != nil {
                     Button(role: .destructive) { FotoAblage.loeschen(sendung.id); foto = nil } label: { Label(T("Foto entfernen"), systemImage: "trash") }
@@ -488,5 +509,28 @@ struct AktionsInhalt: View {
         .background(hervorgehoben ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.accentColor.opacity(0.13)),
                     in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+/// DHL-Live-Verfolgung: „Nur noch 4 Zustellstopps“
+struct LiveKarte: View {
+    let text: String
+    var zeit: Date?
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "box.truck.badge.clock.fill")
+                .font(.system(size: 26))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(Color.accentColor.gradient, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(T("Live von DHL")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text(text).font(.headline)
+                if let zeit { Text(T("Stand %1", zeit.formatted(date: .omitted, time: .shortened))).font(.caption).foregroundStyle(.secondary) }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }

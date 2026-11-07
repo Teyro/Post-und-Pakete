@@ -82,6 +82,8 @@ struct EinstellungenAnsicht: View {
                 #endif
             }
 
+            if e.eingerichtet { WidgetDiagnose(kern: kern) }
+
             if let k = kern.daten?.konten.first {
                 Section(T("Sendungsverfolgung in Home Assistant")) {
                     LabeledContent(T("DHL live"), value: k.dhlLive ? T("an") : T("aus – DHL-Schlüssel in der Integration"))
@@ -174,5 +176,46 @@ struct DirektEinstellungen: View {
                 Link(T("Ship24-Schlüssel"), destination: URL(string: "https://www.ship24.com/tracking-api")!)
             }
         }
+    }
+}
+
+/// Was die Widgets an Home Assistant melden (ab Integration 1.9): startet das Widget, hat es Zugang, welcher Fehler?
+struct WidgetDiagnose: View {
+    let kern: Kern
+    @State private var berichte: [(zeit: Date?, quelle: String, bericht: String)] = []
+    @State private var geladen = false
+    @State private var fehler = ""
+
+    var body: some View {
+        Section {
+            Button(geladen ? T("Neu laden") : T("Berichte der Widgets laden")) { Task { await laden() } }
+            if !fehler.isEmpty { Text(fehler).font(.callout).foregroundStyle(.red) }
+            if geladen && berichte.isEmpty && fehler.isEmpty {
+                Text(T("Noch kein Bericht. Dann startet iOS das Widget gar nicht – oder es hat keinen Zugang: Widget lange drücken → „Widget bearbeiten“ → Adresse und Token eintragen und eine Minute warten."))
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            ForEach(Array(berichte.prefix(8).enumerated()), id: \.offset) { _, b in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text((b.zeit?.formatted(date: .abbreviated, time: .standard) ?? "–") + " · " + b.quelle).font(.caption).foregroundStyle(.secondary)
+                    Text(b.bericht).font(.callout).textSelection(.enabled)
+                }
+            }
+        } header: {
+            Text(T("Widget-Diagnose"))
+        } footer: {
+            Text(T("Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)."))
+        }
+    }
+
+    private func laden() async {
+        do {
+            berichte = try await kern.ha.diagnoseBerichte()
+            fehler = ""
+        } catch let f as HAFehler {
+            fehler = f.status == 404 ? T("Dafür die Integration in Home Assistant auf 1.9 aktualisieren.") : f.text
+        } catch {
+            fehler = error.localizedDescription
+        }
+        geladen = true
     }
 }

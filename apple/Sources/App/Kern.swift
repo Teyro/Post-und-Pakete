@@ -205,12 +205,27 @@ final class Kern {
         widgetsSchreiben()
     }
 
+    /// Notiz merken und – bei Sendungen aus Home Assistant – mit allen Geräten im Haushalt teilen (Integration ≥ 1.9)
+    func notizTeilen(_ s: Sendung, _ text: String) async {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        notizSetzen(s.id, t)
+        guard s.quelle == "ha", einstellungen.eingerichtet, t != s.notiz, !vorschau else { return }
+        do {
+            try await ha.notiz(s.id, t)
+            await laden()
+        } catch {
+            meldung = T("Notiz nur auf diesem Gerät – zum Teilen die Integration auf 1.9 aktualisieren.")
+        }
+    }
+
     /// DHL mit Postleitzahl fragen (höchstens alle 10 Minuten je Sendung); Gemerktes gleich zeigen
     func mehrLaden(_ s: Sendung) async {
         guard s.dienst == "dhl", !s.nummer.isEmpty, !vorschau else { return }
         if mehr[s.nummer] == nil, let g = DHLMitPLZ.gemerkt(s.nummer) { mehr[s.nummer] = g }
         let plz = einstellungen.plz
-        guard plz.count == 5, Date().timeIntervalSince(mehrZeit[s.nummer] ?? .distantPast) > 600 else { return }
+        // am Zustelltag mit Live-Verfolgung alle 2 Minuten, sonst höchstens alle 10
+        let abstand: TimeInterval = (mehr[s.nummer]?.live.isEmpty == false || s.stand == "heute") ? 110 : 600
+        guard plz.count == 5, Date().timeIntervalSince(mehrZeit[s.nummer] ?? .distantPast) > abstand else { return }
         mehrZeit[s.nummer] = Date()
         let dhl = DHLMitPLZ()
         if let m = await dhl.abfragen(nummer: s.nummer, plz: plz) { mehr[s.nummer] = m }

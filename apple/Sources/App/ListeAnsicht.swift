@@ -337,6 +337,10 @@ struct SendungsZeile: View {
                     .foregroundStyle(standFarbe(sendung))
                     .lineLimit(1)
                 if !sendung.fertig { Fortschritt(sendung: sendung, hoehe: 4).frame(maxWidth: 180) }
+                if !sendung.notiz.isEmpty {
+                    Label(sendung.notiz + (sendung.notizVon.isEmpty ? "" : " · " + sendung.notizVon), systemImage: "note.text")
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
                 if let bis = sendung.rueckgabeBis, bis >= Calendar.current.startOfDay(for: Date()) {
                     Text(T("Rückgabe bis %1", Texte.kurzTag(bis))).font(.caption).foregroundStyle(.purple)
                 }

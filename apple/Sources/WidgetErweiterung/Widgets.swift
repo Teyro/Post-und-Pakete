@@ -80,10 +80,13 @@ struct Zeitleiste: AppIntentTimelineProvider {
         var e = gespeichert()
         // Zugang: aus den Einstellungen des Widgets (ohne App-Gruppe, z. B. nach Signulous) oder aus der App
         var ha = Ablage.zugang
+        var herkunft = Ablage.zugang.eingerichtet ? "App-Gruppe" : "keiner"
         if let a = configuration.adresse?.trimmingCharacters(in: .whitespacesAndNewlines),
            let t = configuration.token?.trimmingCharacters(in: .whitespacesAndNewlines), !a.isEmpty, !t.isEmpty {
             ha = HomeAssistant(adresse: a, token: t, konto: configuration.konto ?? "")
+            herkunft = "Widget-Einstellungen"
         }
+        let beginn = Date()
         if ha.eingerichtet {
             do {
                 // harte Grenze: WidgetKit beendet Widgets, die zu lange brauchen – dann bliebe nur der Platzhalter
@@ -105,6 +108,7 @@ struct Zeitleiste: AppIntentTimelineProvider {
             }
         }
         e.daten.inhalt = configuration.inhalt.rawValue
+        if ha.eingerichtet { await ha.diagnose(quelle: WidgetBericht.quelle, bericht: WidgetBericht.text(art: "Widget", herkunft: herkunft, eintrag: e, seit: beginn)) }
         return e
     }
 }
@@ -138,6 +142,8 @@ struct EinfacheZeitleiste: TimelineProvider {
             let u0 = Ablage.lesen()
             var e = Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u0, eingerichtet: u0 != nil))
             let ha = Ablage.zugang.eingerichtet ? Ablage.zugang : WidgetZugangSpeicher.zugang
+            let herkunft = Ablage.zugang.eingerichtet ? "App-Gruppe" : WidgetZugangSpeicher.zugang.eingerichtet ? "vom anderen Widget" : "keiner"
+            let beginn = Date()
             if ha.eingerichtet {
                 e.daten.eingerichtet = true
                 do {
@@ -152,9 +158,28 @@ struct EinfacheZeitleiste: TimelineProvider {
                     e.daten.fehler = error.localizedDescription
                 }
             }
+            if ha.eingerichtet { await ha.diagnose(quelle: WidgetBericht.quelle, bericht: WidgetBericht.text(art: "Widget (einfach)", herkunft: herkunft, eintrag: e, seit: beginn)) }
             let mitternacht = Calendar.current.startOfDay(for: Date().addingTimeInterval(86400))
             completion(Timeline(entries: [e], policy: .after(min(Date().addingTimeInterval(e.daten.fehler.isEmpty ? 1800 : 600), mitternacht))))
         }
+    }
+}
+
+/// Kurzer Bericht für Home Assistant (Einstellungen der App → Widget-Diagnose) – ohne Token und Inhalte
+enum WidgetBericht {
+    static var quelle: String {
+        #if os(iOS)
+        "widget-ios"
+        #else
+        "widget-mac"
+        #endif
+    }
+    static func text(art: String, herkunft: String, eintrag e: Eintrag, seit: Date) -> String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let n = e.daten.uebersicht.map { "\($0.sendungen.count) Sendungen, \($0.briefe.count) Briefe" } ?? "keine Daten"
+        let ms = Int(Date().timeIntervalSince(seit) * 1000)
+        return "\(art) \(version) · Zugang: \(herkunft) · App-Gruppe: \(Ablage.gruppeDa ? "ja" : "nein") · "
+            + (e.daten.fehler.isEmpty ? "ok, \(n)" : "Fehler: \(e.daten.fehler)") + " · \(ms) ms"
     }
 }
 

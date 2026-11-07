@@ -75,6 +75,24 @@ public struct HomeAssistant: Sendable {
         _ = try await anfrage("/api/briefankuendigung/sendung/name", methode: "POST", koerper: ["id": id, "name": name])
     }
 
+    /// Gemeinsame Notiz zu einer Sendung ("" = löschen; ab Integration 1.9)
+    public func notiz(_ id: String, _ text: String) async throws {
+        _ = try await anfrage("/api/briefankuendigung/notiz", methode: "POST", koerper: ["id": id, "notiz": text])
+    }
+
+    /// Bericht eines Widgets an Home Assistant (ab Integration 1.9) – wirft nie, wartet höchstens [zeit] Sekunden
+    public func diagnose(quelle: String, bericht: String, zeit: TimeInterval = 4) async {
+        _ = try? await anfrage("/api/briefankuendigung/diagnose", methode: "POST", koerper: ["quelle": quelle, "bericht": bericht], zeit: zeit)
+    }
+
+    /// Berichte der Widgets (neueste zuerst)
+    public func diagnoseBerichte() async throws -> [(zeit: Date?, quelle: String, bericht: String)] {
+        let d = try await anfrage("/api/briefankuendigung/diagnose")
+        return (JSON.lesen(d)?["berichte"]?.liste ?? []).map { b in
+            (b["zeit"]?.zahl.map { Date(timeIntervalSince1970: $0 / 1000) }, b["quelle"]?.text ?? "", b["bericht"]?.text ?? "")
+        }
+    }
+
     public func erledigt(_ id: String, _ erledigt: Bool) async throws {
         _ = try await anfrage("/api/briefankuendigung/erledigt", methode: "POST", koerper: ["id": id, "erledigt": erledigt])
     }

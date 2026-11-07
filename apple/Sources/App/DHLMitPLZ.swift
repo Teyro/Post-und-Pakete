@@ -15,6 +15,9 @@ final class DHLMitPLZ: NSObject, WKNavigationDelegate {
         var zeitfenster = ""
         var ereignisse: [Ereignis] = []
         var stand = ""
+        /// Live-Verfolgung am Zustelltag: „Nur noch 4 Zustellstopps“ (leer = keine)
+        var live = ""
+        var liveZeit: Date?
     }
 
     private var ansicht: WKWebView?
@@ -64,9 +67,32 @@ final class DHLMitPLZ: NSObject, WKNavigationDelegate {
     static func auswerten(_ s: JSON) -> Mehr {
         let spur = DHLOeffentlichAnbieter.lesen(s)
         var m = Mehr(erwartet: spur.erwartet, zeitfenster: spur.zeitfenster, ereignisse: spur.ereignisse, stand: spur.stand)
-        m.absender = suche(s, schluessel: ["absender", "versender", "shipper", "sender"])
-        m.empfaenger = suche(s, schluessel: ["empfaenger", "empfänger", "recipient", "zustelladresse", "adressiertan"])
+        let d = s["sendungsdetails"]
+        // feste Namen (wie dhl.de sie liest), sonst suchen
+        m.absender = d?["versender"]?["name"]?.text ?? suche(s, schluessel: ["absender", "versender", "shipper", "sender"])
+        if let e = d?["zustellung"]?["empfaenger"] {
+            m.empfaenger = e.text ?? suche(JSON.objekt(["empfaenger": e]), schluessel: ["empfaenger"])
+        }
+        if m.empfaenger.isEmpty { m.empfaenger = suche(s, schluessel: ["empfaenger", "empfänger", "recipient", "zustelladresse", "adressiertan"]) }
+        if let l = d?["liveTracking"] { m.live = liveText(l); m.liveZeit = m.live.isEmpty ? nil : Date() }
         return m
+    }
+
+    /// liveTracking {state, authorized, countdownTextKey "CD01"…"CD50", countdown} → Text wie auf dhl.de
+    static func liveText(_ l: JSON) -> String {
+        let zustand = (l["state"]?.text ?? "").lowercased()
+        guard zustand == "ok" || zustand == "reduced", l["authorized"]?.bool != false else { return "" }
+        let n = l["countdown"]?.zahl.map { Int($0) } ?? l["countdown"]?.text.flatMap { Int($0) }
+        switch l["countdownTextKey"]?.text ?? "" {
+        case "CD01": return T("Nur noch 1 Zustellstopp")
+        case "CD02": return n.map { T("Nur noch %1 Zustellstopps", "\($0)") } ?? T("Nur noch wenige Zustellstopps")
+        case "CD10": return T("Noch etwas mehr als %1 Zustellstopps", "10")
+        case "CD20": return T("Noch etwas mehr als %1 Zustellstopps", "20")
+        case "CD30": return T("Noch etwas mehr als %1 Zustellstopps", "30")
+        case "CD40": return T("Noch etwas mehr als %1 Zustellstopps", "40")
+        case "CD50": return T("Noch etwas mehr als %1 Zustellstopps", "50")
+        default: return n.map { T("Nur noch %1 Zustellstopps", "\($0)") } ?? ""
+        }
     }
 
     /// Erstes Objekt/Textfeld, dessen Name einen der Schlüssel enthält → „Name, PLZ Ort“
