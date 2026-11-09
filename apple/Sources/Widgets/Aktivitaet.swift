@@ -77,3 +77,40 @@ struct StufenBalken: View {
     }
 }
 #endif
+
+#if os(iOS)
+/// Übergabe des Home-Assistant-Zugangs an die Widgets, wenn die Signatur (z. B. Signulous) keine App-Gruppe erlaubt
+/// und iOS Widgets mit eigenen Einstellungen nicht startet: Die App zeigt für ein paar Sekunden diese Live-Aktivität;
+/// beim Zeichnen merkt sich die Widget-Erweiterung den Zugang (nur auf diesem iPhone) und lädt die Widgets neu.
+struct WidgetVerbindung: ActivityAttributes {
+    struct ContentState: Codable, Hashable { var fertig: Bool }
+    var adresse: String
+    var token: String
+    var konto: String
+}
+
+struct WidgetVerbindungWidget: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: WidgetVerbindung.self) { k in
+            let _ = WidgetZugangSpeicher.uebernehmen(adresse: k.attributes.adresse, token: k.attributes.token, konto: k.attributes.konto)
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(.green)
+                Text(T("Widget ist mit Home Assistant verbunden")).font(.headline)
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+        } dynamicIsland: { k in
+            let _ = WidgetZugangSpeicher.uebernehmen(adresse: k.attributes.adresse, token: k.attributes.token, konto: k.attributes.konto)
+            return DynamicIsland {
+                DynamicIslandExpandedRegion(.center) { Text(T("Widget ist mit Home Assistant verbunden")).font(.headline) }
+            } compactLeading: {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            } compactTrailing: {
+                Text(T("Widget")).font(.caption2.weight(.semibold))
+            } minimal: {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            }
+        }
+    }
+}
+#endif

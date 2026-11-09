@@ -188,6 +188,11 @@ struct WidgetDiagnose: View {
 
     var body: some View {
         Section {
+            #if os(iOS)
+            if !Ablage.gruppeDa {
+                Button(T("Widget verbinden")) { Task { await WidgetVerbinder.verbinden(kern) } }
+            }
+            #endif
             Button(geladen ? T("Neu laden") : T("Berichte der Widgets laden")) { Task { await laden() } }
             if !fehler.isEmpty { Text(fehler).font(.callout).foregroundStyle(.red) }
             if geladen && berichte.isEmpty && fehler.isEmpty {
@@ -203,7 +208,7 @@ struct WidgetDiagnose: View {
         } header: {
             Text(T("Widget-Diagnose"))
         } footer: {
-            Text(T("Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)."))
+            Text(T("„Widget verbinden“ gibt dem Widget „Post & Pakete“ den Zugang (kurz erscheint eine Live-Aktivität). Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)."))
         }
     }
 

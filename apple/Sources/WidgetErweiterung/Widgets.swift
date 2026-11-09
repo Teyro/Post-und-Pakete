@@ -12,6 +12,7 @@ struct PaketboteWidgets: WidgetBundle {
         EinfachesWidget()
         #if os(iOS)
         PaketAktivitaetWidget()
+        WidgetVerbindungWidget()
         #endif
     }
 }
@@ -141,6 +142,7 @@ struct EinfacheZeitleiste: TimelineProvider {
         Task {
             let u0 = Ablage.lesen()
             var e = Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u0, eingerichtet: u0 != nil))
+            e.daten.einfach = true
             let ha = Ablage.zugang.eingerichtet ? Ablage.zugang : WidgetZugangSpeicher.zugang
             let herkunft = Ablage.zugang.eingerichtet ? "App-Gruppe" : WidgetZugangSpeicher.zugang.eingerichtet ? "vom anderen Widget" : "keiner"
             let beginn = Date()
@@ -151,6 +153,7 @@ struct EinfacheZeitleiste: TimelineProvider {
                     u.sendungen = zusammenfuehren(ha: u.sendungen, direkt: (u0?.sendungen ?? []).filter { $0.quelle == "direkt" })
                     e = Eintrag(date: Date(), daten: WidgetDaten(uebersicht: u, eingerichtet: true))
                     e.daten.knoepfe = true
+                    e.daten.einfach = true
                     Ablage.schreiben(u)
                 } catch let f as HAFehler {
                     e.daten.fehler = f.text
@@ -188,8 +191,8 @@ struct EinfachesWidget: Widget {
         StaticConfiguration(kind: "pakete-einfach", provider: EinfacheZeitleiste()) { e in
             WidgetInhalt(e: e)
         }
-        .configurationDisplayName(T("Post & Pakete (einfach)"))
-        .description(T("Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets."))
+        .configurationDisplayName(T("Post & Pakete"))
+        .description(T("Angekündigte Briefe und Pakete. Zugang: in der App unter Einstellungen → „Widget verbinden“."))
         #if os(iOS)
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryCircular, .accessoryInline])
         #else
@@ -203,8 +206,8 @@ struct PaketeWidget: Widget {
         AppIntentConfiguration(kind: "pakete", intent: WidgetZugang.self, provider: Zeitleiste()) { e in
             WidgetInhalt(e: e)
         }
-        .configurationDisplayName(T("Post & Pakete"))
-        .description(T("Angekündigte Briefe und Pakete mit voraussichtlicher Zustellung."))
+        .configurationDisplayName(T("Post & Pakete (mit Einstellungen)"))
+        .description(T("Mit eigener Auswahl und eigenem Zugang – startet bei neu signierten Apps (Signulous) evtl. nicht."))
         #if os(iOS)
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryCircular, .accessoryInline])
         #else

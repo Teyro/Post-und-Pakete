@@ -21,7 +21,7 @@ struct PaketboteApp: App {
         }
         .onChange(of: phase) { _, neu in
             if neu == .active {
-                Task { await kern.laden(still: true); await LiveAktivitaeten.abgleichen(kern, darfStarten: true); await UpdateHinweis.shared.pruefen() }
+                Task { await kern.laden(still: true); await LiveAktivitaeten.abgleichen(kern, darfStarten: true); await WidgetVerbinder.beiBedarf(kern); await UpdateHinweis.shared.pruefen() }
             }
             if neu == .background { Hintergrund.planen() }
         }

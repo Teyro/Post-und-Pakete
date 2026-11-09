@@ -1,3 +1,4 @@
+"„Widget verbinden“ gibt dem Widget „Post & Pakete“ den Zugang (kurz erscheint eine Live-Aktivität). Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)." = "„Widget verbinden“ gibt dem Widget „Post & Pakete“ den Zugang (kurz erscheint eine Live-Aktivität). Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte).";
 "%1 angekündigt" = "%1 angekündigt";
 "%1 Briefe" = "%1 Briefe";
 "%1 davon sind wichtig." = "%1 davon sind wichtig.";
@@ -44,10 +45,11 @@
 "angekündigt %1" = "angekündigt %1";
 "Angekündigt %1" = "Angekündigt %1";
 "Angekündigt am %1" = "Angekündigt am %1";
-"Angekündigte Briefe und Pakete mit voraussichtlicher Zustellung." = "Angekündigte Briefe und Pakete mit voraussichtlicher Zustellung.";
+"Angekündigte Briefe und Pakete. Zugang: in der App unter Einstellungen → „Widget verbinden“." = "Angekündigte Briefe und Pakete. Zugang: in der App unter Einstellungen → „Widget verbinden“.";
 "Ansehen" = "Ansehen";
 "Anzahl" = "Anzahl";
 "Anzeige" = "Anzeige";
+"App öffnen → Einstellungen → „Widget verbinden“" = "App öffnen → Einstellungen → „Widget verbinden“";
 "App öffnen und einrichten" = "App öffnen und einrichten";
 "Apr" = "Apr";
 "Art" = "Art";
@@ -87,7 +89,6 @@
 "Die Integration „Briefankündigung“ fehlt in Home Assistant (HACS, ab Version 1.4)." = "Die Integration „Briefankündigung“ fehlt in Home Assistant (HACS, ab Version 1.4).";
 "Die Nummer kenne ich nicht – bitte in der App mit Paketdienst hinzufügen." = "Die Nummer kenne ich nicht – bitte in der App mit Paketdienst hinzufügen.";
 "Die Nummer passt zu mehreren Diensten – bitte den Paketdienst wählen." = "Die Nummer passt zu mehreren Diensten – bitte den Paketdienst wählen.";
-"Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte)." = "Die Widgets schicken bei jedem Aktualisieren einen kurzen Bericht an Home Assistant (ohne Token und Inhalte).";
 "Dienst" = "Dienst";
 "Direkt verfolgen" = "Direkt verfolgen";
 "Direkt verfolgen – Anbieter" = "Direkt verfolgen – Anbieter";
@@ -167,10 +168,12 @@
 "Links einen Brief oder ein Paket wählen." = "Links einen Brief oder ein Paket wählen.";
 "Live von DHL" = "Live von DHL";
 "Live-Aktivität für Pakete, die heute kommen" = "Live-Aktivität für Pakete, die heute kommen";
+"Live-Aktivitäten sind aus – iPhone-Einstellungen → Post & Pakete → Live-Aktivitäten erlauben." = "Live-Aktivitäten sind aus – iPhone-Einstellungen → Post & Pakete → Live-Aktivitäten erlauben.";
 "Mai" = "Mai";
 "Mär" = "Mär";
 "Mehr" = "Mehr";
 "Mi" = "Mi";
+"Mit eigener Auswahl und eigenem Zugang – startet bei neu signierten Apps (Signulous) evtl. nicht." = "Mit eigener Auswahl und eigenem Zugang – startet bei neu signierten Apps (Signulous) evtl. nicht.";
 "Mitteilungen bei neuem Stand" = "Mitteilungen bei neuem Stand";
 "Mo" = "Mo";
 "Monat" = "Monat";
@@ -213,7 +216,6 @@
 "Öffentliche Seiten fragen (DHL ohne Schlüssel, GLS, DPD)" = "Öffentliche Seiten fragen (DHL ohne Schlüssel, GLS, DPD)";
 "Offizielle DHL-Schnittstelle – eigener kostenloser Schlüssel" = "Offizielle DHL-Schnittstelle – eigener kostenloser Schlüssel";
 "Offizielle UPS-Schnittstelle – eigener kostenloser Zugang" = "Offizielle UPS-Schnittstelle – eigener kostenloser Zugang";
-"Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets." = "Ohne eigene Einstellungen – nutzt den Zugang der App bzw. des anderen Widgets.";
 "Okt" = "Okt";
 "Paket" = "Paket";
 "Paketdienst" = "Paketdienst";
@@ -222,7 +224,7 @@
 "Pakete (%1)" = "Pakete (%1)";
 "Paketschein scannen" = "Paketschein scannen";
 "Post & Pakete" = "Post & Pakete";
-"Post & Pakete (einfach)" = "Post & Pakete (einfach)";
+"Post & Pakete (mit Einstellungen)" = "Post & Pakete (mit Einstellungen)";
 "Post & Pakete %1 ist da" = "Post & Pakete %1 ist da";
 "Post & Pakete auf dem iPhone öffnen." = "Post & Pakete auf dem iPhone öffnen.";
 "Post & Pakete auf GitHub" = "Post & Pakete auf GitHub";
@@ -289,6 +291,7 @@
 "UPS Client-ID" = "UPS Client-ID";
 "UPS Client-Secret" = "UPS Client-Secret";
 "UPS-Zugang (kostenlos)" = "UPS-Zugang (kostenlos)";
+"Verbinden hat nicht geklappt: %1" = "Verbinden hat nicht geklappt: %1";
 "Verbindung prüfen" = "Verbindung prüfen";
 "Verbunden – %1 Postfächer, %2 unterwegs." = "Verbunden – %1 Postfächer, %2 unterwegs.";
 "Verlauf" = "Verlauf";
@@ -305,7 +308,11 @@
 "Vorzeigen" = "Vorzeigen";
 "Wichtig" = "Wichtig";
 "Wichtig: %1." = "Wichtig: %1.";
+"Widget" = "Widget";
+"Widget ist mit Home Assistant verbunden" = "Widget ist mit Home Assistant verbunden";
 "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen" = "Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen";
+"Widget verbinden" = "Widget verbinden";
+"Widget verbunden – es lädt gleich neu." = "Widget verbunden – es lädt gleich neu.";
 "Widget-Diagnose" = "Widget-Diagnose";
 "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App." = "Widgets: Die Signatur (z. B. Signulous) erlaubt keine App-Gruppe. Das Widget lange drücken → „Widget bearbeiten“ → Home-Assistant-Adresse und Token eintragen; direkt verfolgte Sendungen zeigt es nach dem nächsten Öffnen der App.";
 "Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL." = "Wie auf dhl.de nach „PLZ eingeben“: Absender, Empfänger und die Orte im Verlauf. Die Postleitzahl geht nur an DHL.";
@@ -313,6 +320,7 @@
 "z. B. „Beim Nachbarn Nr. 12“ oder „Hab ich angenommen“" = "z. B. „Beim Nachbarn Nr. 12“ oder „Hab ich angenommen“";
 "z. B. Steuerbescheid, Frist 30.11." = "z. B. Steuerbescheid, Frist 30.11.";
 "Zeigen" = "Zeigen";
+"Zuerst Home Assistant eintragen." = "Zuerst Home Assistant eintragen.";
 "zugestellt" = "zugestellt";
 "Zugestellt" = "Zugestellt";
 "Zugestellte %1 Tage zeigen" = "Zugestellte %1 Tage zeigen";

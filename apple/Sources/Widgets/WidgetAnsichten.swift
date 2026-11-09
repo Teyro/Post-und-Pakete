@@ -29,6 +29,8 @@ struct WidgetDaten {
     var fehler = ""
     /// „Angekommen“-Knöpfe zeigen (das Widget hat selbst Zugang zu Home Assistant)
     var knoepfe = false
+    /// Widget ohne eigene Einstellungen (Zugang kommt von der App)
+    var einfach = false
 
     var gruppen: Gruppen { inhalt == "briefe" ? Gruppen() : Gruppen(uebersicht?.sendungen ?? [], jetzt: jetzt) }
     var briefe: BriefGruppen { inhalt == "pakete" ? BriefGruppen() : BriefGruppen(uebersicht?.briefe ?? [], jetzt: jetzt) }
@@ -86,7 +88,7 @@ struct WidgetLeer: View {
             Image(systemName: !daten.eingerichtet ? "gearshape" : !daten.fehler.isEmpty ? "wifi.exclamationmark" : daten.inhalt == "briefe" ? "envelope" : "shippingbox")
                 .font(.system(size: 24, weight: .light))
                 .foregroundStyle(.secondary)
-            Text(!daten.eingerichtet ? (Ablage.gruppeDa ? T("App öffnen und einrichten") : T("Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen"))
+            Text(!daten.eingerichtet ? (Ablage.gruppeDa ? T("App öffnen und einrichten") : daten.einfach ? T("App öffnen → Einstellungen → „Widget verbinden“") : T("Widget lange drücken → „Widget bearbeiten“ → Home Assistant eintragen"))
                  : !daten.fehler.isEmpty ? daten.fehler : daten.titel)
                 .font(.system(size: 12, weight: .medium))
                 .multilineTextAlignment(.center)

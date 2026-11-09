@@ -8,6 +8,17 @@ enum WidgetZugangSpeicher {
         let d = UserDefaults.standard
         d.set(ha.basis, forKey: "w.adresse"); d.set(ha.token, forKey: "w.token"); d.set(ha.konto, forKey: "w.konto")
     }
+    /** Zugang aus der Live-Aktivität „Widget verbinden“ übernehmen; bei Änderung die Widgets neu laden. */
+    @discardableResult
+    static func uebernehmen(adresse: String, token: String, konto: String) -> Bool {
+        let neu = HomeAssistant(adresse: adresse, token: token, konto: konto)
+        guard neu.eingerichtet else { return false }
+        let alt = zugang
+        guard alt.basis != neu.basis || alt.token != neu.token || alt.konto != neu.konto else { return false }
+        merken(neu)
+        WidgetCenter.shared.reloadAllTimelines()
+        return true
+    }
     static var zugang: HomeAssistant {
         let d = UserDefaults.standard
         return HomeAssistant(adresse: d.string(forKey: "w.adresse") ?? "", token: d.string(forKey: "w.token") ?? "", konto: d.string(forKey: "w.konto") ?? "")
