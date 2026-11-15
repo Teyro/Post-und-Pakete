@@ -45,6 +45,9 @@ targets:
       - target: PaketboteTeilen
         embed: true
         codeSign: true
+      - target: Paketbote-Uhr
+        embed: true
+        codeSign: true
     settings:
       base:
         PRODUCT_NAME: Paketbote
