@@ -64,6 +64,10 @@ final class UhrZustand: NSObject, WCSessionDelegate {
     nonisolated func session(_ s: WCSession, didReceiveApplicationContext k: [String: Any]) {
         Task { @MainActor in self.uebernehmen(k) }
     }
+    #if os(iOS)
+    nonisolated func sessionDidBecomeInactive(_ s: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ s: WCSession) { s.activate() }
+    #endif
 
     private func uebernehmen(_ k: [String: Any]) {
         guard let a = k["adresse"] as? String else { return }
