@@ -64,6 +64,35 @@ function sendungenAus(antwort) {
     });
 }
 
+/** Pakete aus „Paket Tracker“ (parcel_tracker): GET /api/states → Sendungen (Kennung „pt:<nummer>“) */
+function paketTrackerAus(zustaende) {
+    var stand = function (z, tage) {
+        if (z === "out_for_delivery") return "heute";
+        if (z === "awaiting_pickup") return "abholbereit";
+        if (z === "delivered") return "zugestellt";
+        return tage === 0 ? "heute" : "unterwegs";
+    };
+    return (zustaende || []).filter(function (z) {
+        return z && /^sensor\.paket_/.test(z.entity_id || "") && z.attributes && z.attributes.number && z.attributes.carrier;
+    }).map(function (z) {
+        var a = z.attributes;
+        var von = a.eta_from || "", bis = a.eta_to || "";
+        return {
+            id: "pt:" + a.number, datum: Date.parse(a.last_update || z.last_changed || "") || Date.now(), absender: a.name || "", name: "",
+            nummer: a.tracking_ref || a.number, dienst: a.carrier, dienstName: a.carrier_name || dienst(a.carrier).name, stand: stand(z.state, a.days_until),
+            erwartet: a.eta_date || "", zeitfenster: von ? (bis ? von + "–" + bis : von) : "", kundenkonto: "", verfolgen: a.tracking_url || "",
+            manuell: true, statusText: a.status_text || "", problem: z.state === "exception", erledigt: false,
+            kontoId: "", kontoName: "", anbieter: "Paket Tracker", quelle: "ha", ruecksendung: false,
+            abholcode: "", abholort: a.pickup_point || "", abholadresse: "", abholfrist: a.pickup_until || "", ruecksendefrist: "",
+            ereignisse: (a.events || []).filter(function (e) { return e && e.text; })
+                .map(function (e) { return { zeit: e.timestamp ? Date.parse(e.timestamp) || 0 : 0, text: e.text, ort: e.location || "" }; })
+        };
+    }).sort(function (x, y) { return y.datum - x.datum; });
+}
+
+/** Nummer aus „pt:<nummer>“, sonst "" */
+function paketTrackerNummer(id) { return String(id || "").indexOf("pt:") === 0 ? String(id).slice(3) : ""; }
+
 function titel(s) { return s.name || s.absender || s.nummer || t("Paket"); }
 function fertig(s) { return s.stand === "zugestellt" || s.erledigt; }
 

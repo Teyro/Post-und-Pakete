@@ -157,18 +157,36 @@ QtObject {
         x.send(koerper ? JSON.stringify(koerper) : null);
     }
 
+    // „Paket Tracker“ (parcel_tracker) in Home Assistant: dann kommen die Pakete von dort, Briefankündigung liefert nur Briefe
+    property bool paketTracker: false
+    property var ptSendungen: []
+
     function laden() {
         direktAktualisieren();
         if (!eingerichtet || abgelehnt) return;
         laedt = true;
-        anfrage("GET", "/api/briefankuendigung/briefe", null, function (j, text) {
+        anfrage("GET", "/api/states", null, function (alle) {
+            var da = !!alle && alle.some(function (z) { return z.entity_id === "sensor.pakete_heute"; });
+            paketTracker = da;
+            ptSendungen = da ? Logik.paketTrackerAus(alle) : [];
+            ladenBriefe();
+        });
+    }
+
+    function ladenBriefe() {
+        anfrage("GET", "/api/briefankuendigung/briefe", null, function (j, text, status) {
             laedt = false;
+            if (paketTracker && (status === 404 || !j)) {
+                // nur Paket Tracker eingerichtet: Pakete von dort, keine Briefe
+                haSendungen = ptSendungen; briefe = []; fehler = ""; geladen = true; pruefeMitteilungen(); direktAktualisieren();
+                return;
+            }
             if (text || !j) { fehler = text || S.t("Unerwartete Antwort von Home Assistant."); return; }
             var k = konto.trim().toLowerCase();
             var neu = Logik.sendungenAus(j).filter(function (s) { return !k || s.kontoId.toLowerCase() === k || s.kontoName.toLowerCase() === k; });
             konten = j.konten || [];
             version = j.version || 1;
-            haSendungen = neu;
+            haSendungen = paketTracker ? ptSendungen : neu;
             var nb = Logik.briefeAus(j).filter(function (b) { return !k || b.kontoId.toLowerCase() === k || b.kontoName.toLowerCase() === k; });
             // neue Briefe von heute melden (nicht beim ersten Laden)
             if (geladen) {
@@ -199,6 +217,12 @@ QtObject {
         if (!direkt.some(function (x) { return x.nummer === s.nummer; })) direktSetzen([s].concat(direkt));
         einmalAbfragen(s);
         if (!eingerichtet || !auchInHA) { fertig(""); return; }
+        if (paketTracker) {
+            var d = { number: nummer, carrier: ["dhl", "dpd", "gls", "hermes", "ups"].indexOf(dienst) >= 0 ? dienst : "auto" };
+            if (name) d.name = name;
+            anfrage("POST", "/api/services/parcel_tracker/add_parcel", d, function (j, text) { if (!text) laden(); fertig(text); });
+            return;
+        }
         anfrage("POST", "/api/briefankuendigung/sendung", { nummer: nummer, dienst: dienst, name: name, konto: konto }, function (j, text) {
             if (!text) laden();
             fertig(text);
@@ -232,6 +256,8 @@ QtObject {
     function umbenennen(id, name) {
         var s = sendung(id);
         direktSetzen(direkt.map(function (x) { return x.id === id || (s && x.nummer === s.nummer) ? Object.assign({}, x, { name: name }) : x; }));
+        var ptn = Logik.paketTrackerNummer(id);
+        if (ptn) { anfrage("POST", "/api/services/parcel_tracker/rename_parcel", { number: ptn, name: name }, function (j, text) { if (text) meldung(text); laden(); }); return; }
         if (s && s.quelle !== "direkt")
             anfrage("POST", "/api/briefankuendigung/sendung/name", { id: id, name: name }, function (j, text) { if (text) meldung(text); laden(); });
     }
@@ -240,6 +266,8 @@ QtObject {
         var s = sendung(id);
         direktSetzen(direkt.filter(function (x) { return x.id !== id && !(s && s.nummer && x.nummer === s.nummer); }));
         haSendungen = haSendungen.filter(function (x) { return x.id !== id || !x.manuell; });
+        var ptn = Logik.paketTrackerNummer(id);
+        if (ptn) { anfrage("POST", "/api/services/parcel_tracker/remove_parcel", { number: ptn }, function (j, text) { if (text) meldung(text); laden(); }); return; }
         if (s && s.quelle !== "direkt")
             anfrage("POST", "/api/briefankuendigung/sendung/entfernen", { id: id }, function (j, text) { if (text) meldung(text); laden(); });
     }
@@ -251,10 +279,13 @@ QtObject {
             return;
         }
         haSendungen = haSendungen.map(function (x) { return x.id === id ? Object.assign({}, x, { erledigt: ja }) : x; });
+        var ptn = Logik.paketTrackerNummer(id);
+        if (ptn) { if (ja) anfrage("POST", "/api/services/parcel_tracker/mark_delivered", { number: ptn }, function (j, text) { if (text) meldung(text); laden(); }); return; }
         anfrage("POST", "/api/briefankuendigung/erledigt", { id: id, erledigt: ja }, function (j, text) { if (text) meldung(text); laden(); });
     }
 
     function jetztNachsehen() {
+        if (paketTracker) anfrage("POST", "/api/services/parcel_tracker/refresh", {}, function () {});
         anfrage("POST", "/api/briefankuendigung/abrufen" + (konto ? "?konto=" + encodeURIComponent(konto) : ""), {}, function (j, text) {
             if (text) { meldung(text); return; }
             nachladen.zaehler = 0;

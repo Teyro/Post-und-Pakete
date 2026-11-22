@@ -57,6 +57,8 @@ Home Assistant address and token; it then loads by itself.
    - **Send notifications to** the Home Assistant app on your iPhone – the most reliable push notifications.
 3. Create a **long-lived access token** (your name at the bottom left → Security).
 
+**Parcels via “Paket Tracker” (recommended):** if the [Paket Tracker](https://github.com/SoerenKaiser99/parcel_tracker) integration (HACS) is set up, the app takes all parcels from there and adds new ones there; **Briefankündigung** then only supplies Deutsche Post letters.
+
 Amazon, Hermes and DPD have no open API for consumers. Post & Pakete deliberately does **not** log in with your
 account there – the shipping mails and 17TRACK are enough.
 

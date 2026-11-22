@@ -153,3 +153,25 @@ final class BriefTests: XCTestCase {
     }
 
 }
+
+final class PaketTrackerTests: XCTestCase {
+    func testZustaendeZuSendungen() {
+        let z: [[String: Any]] = [
+            ["entity_id": "sensor.paket_00340434", "state": "out_for_delivery", "last_changed": "2026-11-22T08:00:00+00:00",
+             "attributes": ["carrier": "dhl", "carrier_name": "DHL", "number": "00340434", "name": "Druckerpatronen", "eta_date": "2026-11-22", "eta_from": "10:00", "eta_to": "12:00",
+                            "days_until": 0, "status_text": "In Zustellung", "events": [["timestamp": "2026-11-22T07:00:00+00:00", "text": "Im Zustellfahrzeug", "location": "Hamburg"]]]],
+            ["entity_id": "sensor.paket_tracker_17track_kontingent", "state": "90", "attributes": ["unit_of_measurement": "Nummern"]],
+            ["entity_id": "sensor.paket_amz123", "state": "awaiting_pickup", "attributes": ["carrier": "amazon", "number": "amz123", "pickup_point": "Packstation 101"]],
+        ]
+        let s = PaketTracker.sendungen(z)
+        XCTAssertEqual(s.count, 2)
+        let dhl = s.first { $0.dienst == "dhl" }!
+        XCTAssertEqual(dhl.id, "pt:00340434")
+        XCTAssertEqual(dhl.stand, "heute")
+        XCTAssertEqual(dhl.zeitfenster, "10:00–12:00")
+        XCTAssertEqual(dhl.ereignisse.first?.ort, "Hamburg")
+        XCTAssertEqual(s.first { $0.dienst == "amazon" }?.stand, "abholbereit")
+        XCTAssertEqual(PaketTracker.nummer("pt:00340434"), "00340434")
+        XCTAssertNil(PaketTracker.nummer("abc"))
+    }
+}

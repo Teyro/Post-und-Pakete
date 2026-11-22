@@ -51,16 +51,36 @@ public struct HomeAssistant: Sendable {
 
     /// Alle Sendungen (des gewählten Postfachs)
     /// zeit: höchstens so lange warten (Widgets haben nur wenige Sekunden)
+    /// Mit „Paket Tracker“: Pakete von dort, aus „Briefankündigung“ nur noch die Briefe (fehlt sie, eben ohne Briefe)
     public func laden(zeit: TimeInterval = 20) async throws -> Uebersicht {
-        let d = try await anfrage("/api/briefankuendigung/briefe", zeit: zeit)
-        guard let j = JSON.lesen(d), let u = Uebersicht.aus(j) else { throw HAFehler(status: -2) }
-        return u.nur(konto: konto)
+        async let pt: [Sendung]? = try? paketTrackerSendungen(zeit: zeit)
+        var brief: Uebersicht?
+        var fehler: Error?
+        do {
+            let d = try await anfrage("/api/briefankuendigung/briefe", zeit: zeit)
+            guard let j = JSON.lesen(d), let u = Uebersicht.aus(j) else { throw HAFehler(status: -2) }
+            brief = u.nur(konto: konto)
+        } catch { fehler = error }
+        if let pakete = await pt, await paketTrackerDa(zeit: min(zeit, 8)) {
+            var u = brief ?? Uebersicht(version: 4)
+            // eigene Sendungen der App („direkt“) bleiben, die Pakete der Briefankündigung entfallen
+            u.sendungen = pakete + u.sendungen.filter { $0.quelle == "direkt" }
+            return u
+        }
+        if let brief { return brief }
+        throw fehler ?? HAFehler(status: -2)
     }
 
     /// Sendung von Hand verfolgen; dienst "" = an der Nummer erkennen
     @discardableResult
     /// standInfo (ab Integration 1.8): Stand, den dieses Gerät kennt – siehe Abgleich
     public func hinzufuegen(nummer: String, dienst: String, name: String, standInfo: [String: Any]? = nil) async throws -> String {
+        if await paketTrackerDa() {
+            var d: [String: Any] = ["number": nummer, "carrier": PaketTracker.carrier(dienst)]
+            if !name.isEmpty { d["name"] = name }
+            try await paketTrackerDienst("add_parcel", d)
+            return "pt:" + nummer
+        }
         var k: [String: Any] = ["nummer": nummer, "dienst": dienst, "name": name, "konto": konto]
         if let standInfo { k["stand_info"] = standInfo }
         let d = try await anfrage("/api/briefankuendigung/sendung", methode: "POST", koerper: k)
@@ -68,15 +88,18 @@ public struct HomeAssistant: Sendable {
     }
 
     public func entfernen(_ id: String) async throws {
+        if let n = PaketTracker.nummer(id) { try await paketTrackerDienst("remove_parcel", ["number": n]); return }
         _ = try await anfrage("/api/briefankuendigung/sendung/entfernen", methode: "POST", koerper: ["id": id])
     }
 
     public func umbenennen(_ id: String, _ name: String) async throws {
+        if let n = PaketTracker.nummer(id) { try await paketTrackerDienst("rename_parcel", ["number": n, "name": name]); return }
         _ = try await anfrage("/api/briefankuendigung/sendung/name", methode: "POST", koerper: ["id": id, "name": name])
     }
 
     /// Gemeinsame Notiz zu einer Sendung ("" = löschen; ab Integration 1.9)
     public func notiz(_ id: String, _ text: String) async throws {
+        if PaketTracker.nummer(id) != nil { throw HAFehler(status: 405) } // Paket Tracker kennt keine Notizen
         _ = try await anfrage("/api/briefankuendigung/notiz", methode: "POST", koerper: ["id": id, "notiz": text])
     }
 
@@ -94,13 +117,18 @@ public struct HomeAssistant: Sendable {
     }
 
     public func erledigt(_ id: String, _ erledigt: Bool) async throws {
+        // Paket Tracker: „Erhalten“ (lässt sich nicht zurücknehmen)
+        if let n = PaketTracker.nummer(id) { if erledigt { try await paketTrackerDienst("mark_delivered", ["number": n]) }; return }
         _ = try await anfrage("/api/briefankuendigung/erledigt", methode: "POST", koerper: ["id": id, "erledigt": erledigt])
     }
 
     /// Home Assistant jetzt ins Postfach schauen lassen
     public func abrufen() async throws {
+        let pt = await paketTrackerDa()
+        if pt { try? await paketTrackerDienst("refresh", [:]) }
         let k = konto.isEmpty ? "" : "?konto=" + (konto.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")
-        _ = try await anfrage("/api/briefankuendigung/abrufen" + k, methode: "POST", koerper: [:])
+        do { _ = try await anfrage("/api/briefankuendigung/abrufen" + k, methode: "POST", koerper: [:]) }
+        catch let f as HAFehler where pt && f.status == 404 { /* nur Paket Tracker, keine Briefankündigung */ }
     }
 }
 

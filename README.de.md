@@ -68,6 +68,11 @@ unter Linux **KRunner** („pb 0034…“), **Karte**, **Mitteilungen** und **Fl
    - **Mitteilungen an** die Home-Assistant-App deines iPhones – die zuverlässigsten Push-Mitteilungen.
 3. Ein **langlebiges Zugriffstoken** anlegen (unten links auf deinen Namen → Sicherheit).
 
+**Pakete mit „Paket Tracker“ (empfohlen):** Ist die Integration [Paket Tracker](https://github.com/SoerenKaiser99/parcel_tracker)
+(HACS) eingerichtet, holt die App alle Pakete von dort – DHL, DPD, GLS, Hermes, UPS, Amazon, eBay, AliExpress – und
+legt neue Sendungen dort an (umbenennen, „Erhalten“, entfernen inklusive). **Briefankündigung** liefert dann nur noch die
+Briefe der Deutschen Post; ohne Briefankündigung zeigt die App eben nur Pakete.
+
 Amazon, Hermes und DPD haben keine offene Schnittstelle für Privatkunden. Post & Pakete meldet sich dort
 bewusst **nicht** mit deinem Konto an – die Versandmails und 17TRACK genügen.
 

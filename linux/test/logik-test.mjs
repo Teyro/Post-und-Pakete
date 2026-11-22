@@ -111,3 +111,18 @@ const si = L.standInfo(dir[0]);
 assert.equal(si.stand, 'zugestellt');
 assert.ok(si.ereignisse[0].zeit.startsWith('2026-10-21'));
 console.log('logik.js: alle Prüfungen bestanden');
+
+// Paket Tracker (parcel_tracker)
+{
+  const z = [
+    { entity_id: "sensor.paket_00340434", state: "out_for_delivery", last_changed: "2026-11-22T08:00:00+00:00",
+      attributes: { carrier: "dhl", carrier_name: "DHL", number: "00340434", name: "Druckerpatronen", eta_from: "10:00", eta_to: "12:00", events: [{ timestamp: "2026-11-22T07:00:00+00:00", text: "Im Fahrzeug", location: "Hamburg" }] } },
+    { entity_id: "sensor.paket_tracker_17track_kontingent", state: "90", attributes: {} },
+    { entity_id: "sensor.paket_amz1", state: "awaiting_pickup", attributes: { carrier: "amazon", number: "amz1", pickup_point: "Packstation 101" } },
+  ];
+  const s = L.paketTrackerAus(z);
+  assert.ok(s.length === 2, "Paket Tracker: zwei Pakete");
+  assert.ok(s.find((x) => x.dienst === "dhl").stand === "heute" && s.find((x) => x.dienst === "dhl").zeitfenster === "10:00–12:00", "Paket Tracker: Stand und Zeitfenster");
+  assert.ok(s.find((x) => x.dienst === "amazon").stand === "abholbereit", "Paket Tracker: abholbereit");
+  assert.ok(L.paketTrackerNummer("pt:00340434") === "00340434" && L.paketTrackerNummer("x") === "", "Paket Tracker: Nummer");
+}
